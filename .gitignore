@@ -1,0 +1,60 @@
+# API Credentials - NEVER commit these!
+.env
+*.env
+
+# Output files
+results*.json
+results*.csv
+california_results*.json
+california_results*.csv
+test_results*.json
+test_results*.csv
+small_batch_results*.json
+small_batch_results*.csv
+
+# Progress files
+search_progress.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+complete_oauth.py
+debug_search.py
+test_api.py
+setup_credentials.py
