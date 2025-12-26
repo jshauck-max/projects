@@ -94,10 +94,33 @@ class AutoTumblrProfileFinder(TumblrProfileFinder):
     """Extended finder with automatic rate limit management"""
 
     def __init__(self, consumer_key: str, consumer_secret: str,
-                 oauth_token: str, oauth_secret: str):
+                 oauth_token: str, oauth_secret: str, exclusion_file: str = 'excluded_blogs.txt'):
         super().__init__(consumer_key, consumer_secret, oauth_token, oauth_secret)
         self.rate_tracker = RateLimitTracker()
         self.progress_file = 'search_progress.json'
+        self.exclusion_file = exclusion_file
+        self.excluded_blogs = self.load_exclusion_list()
+
+    def load_exclusion_list(self) -> Set[str]:
+        """Load list of blogs to exclude from searches"""
+        excluded = set()
+        if os.path.exists(self.exclusion_file):
+            with open(self.exclusion_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip comments and empty lines
+                    if line and not line.startswith('#'):
+                        excluded.add(line.lower())
+            print(f"[Exclusion] Loaded {len(excluded)} blogs to skip")
+        return excluded
+
+    def add_to_exclusion_list(self, blog_name: str):
+        """Add a blog to the exclusion list"""
+        blog_name_lower = blog_name.lower()
+        if blog_name_lower not in self.excluded_blogs:
+            self.excluded_blogs.add(blog_name_lower)
+            with open(self.exclusion_file, 'a') as f:
+                f.write(f"{blog_name}\n")
 
     def save_progress(self):
         """Save current progress to file"""
@@ -207,9 +230,15 @@ class AutoTumblrProfileFinder(TumblrProfileFinder):
 
         processed = 0
         qualified = 0
+        skipped = 0
 
         for blog_name, post_location_mentions in blog_locations.items():
             processed += 1
+
+            # Skip if in exclusion list
+            if blog_name.lower() in self.excluded_blogs:
+                skipped += 1
+                continue
 
             # Skip if already processed
             if blog_name in self.discovered_blogs:
@@ -279,14 +308,19 @@ class AutoTumblrProfileFinder(TumblrProfileFinder):
 
             self.blog_themes[blog_name].add(theme)
 
+            # Add to exclusion list (both qualified and non-qualified to avoid re-checking)
+            self.add_to_exclusion_list(blog_name)
+
             # Progress update and save
             if processed % 10 == 0:
                 status = self.rate_tracker.get_status()
-                print(f"  Processed {processed}/{len(blog_locations)}, qualified: {qualified} | API: {status['hourly_calls']}/hr, {status['daily_calls']}/day")
+                print(f"  Processed {processed}/{len(blog_locations)}, qualified: {qualified}, skipped: {skipped} | API: {status['hourly_calls']}/hr, {status['daily_calls']}/day")
                 self.save_progress()
 
             time.sleep(2)
 
+        if skipped > 0:
+            print(f"  Skipped {skipped} blogs from exclusion list (saved {skipped} API calls)")
         print(f"  Finished processing. Qualified: {qualified}/{len(blog_locations)}")
         self.save_progress()
 

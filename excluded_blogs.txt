@@ -1,0 +1,15 @@
+# Blogs to exclude from future searches
+# One blog name per line
+
+# Already found - not desired
+diapeywipeyjohnny
+kleinerjunge
+knobahdi
+nebulosaperdida21
+osovakitbr
+lucemedium
+disabilicom
+drking77
+pier-carlo-universe
+ericagazzoldi
+umi-no-onnanoko
